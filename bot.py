@@ -8,13 +8,15 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "👋 Welcome!\n\n"
-        "📥 Video download karne ke liye YouTube / Instagram / Facebook ka link bhejo."
+        "👋 Welcome!
+
+"
+        "📥 Video download karne ke liye Instagram / Facebook ka public link bhejo."
     )
 
 def is_url(text):
     url_regex = re.compile(
-        r'^(https?://)?(www\.)?(youtube\.com|youtu\.be|instagram\.com|facebook\.com|fb\.watch)'
+        r'^(https?://)?(www.)?(instagram.com|facebook.com|fb.watch)'
     )
     return re.match(url_regex, text)
 
@@ -22,14 +24,14 @@ async def download_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
     url = update.message.text.strip()
 
     if not is_url(url):
-        await update.message.reply_text("❌ Valid video link bhejo.")
+        await update.message.reply_text("❌ Sirf Instagram / Facebook ka valid video link bhejo.")
         return
 
     await update.message.reply_text("⏳ Download ho raha hai, thoda wait karo...")
 
     ydl_opts = {
-        'format': 'best',
-        'outtmpl': 'video.%(ext)s'
+        "format": "best",
+        "outtmpl": "video.%(ext)s"
     }
 
     try:
@@ -38,12 +40,13 @@ async def download_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         for file in os.listdir():
             if file.startswith("video."):
-                await update.message.reply_video(video=open(file, 'rb'))
+                await update.message.reply_video(video=open(file, "rb"))
                 os.remove(file)
                 break
 
     except Exception as e:
-        await update.message.reply_text("❌ Download failed. Dusra link try karo.")
+        # Debug ke liye chaaho to print(e) rakho, Render logs me dikhega
+        await update.message.reply_text("❌ Download failed. Public Insta/Facebook link try karo.")
 
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
