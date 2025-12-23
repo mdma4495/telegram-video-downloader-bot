@@ -9,7 +9,7 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 text = "👋 Welcome!\n\n🎥 Video download karne ke liye Instagram / Facebook ka public link bhejo"
-📥 Video download karne ke liye Instagram / Facebook ka public link bhejo."
+
     await update.message.reply_text(text)
 
 
