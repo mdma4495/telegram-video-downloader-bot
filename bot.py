@@ -11,23 +11,24 @@ from telegram.ext import (
     filters
 )
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
+# 🔴 YAHAN APNA BOT TOKEN DAALO (recommended)
+BOT_TOKEN = os.getenv("BOT_TOKEN") or "PASTE_YOUR_BOT_TOKEN_HERE"
 
 
 # /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = (
+    await update.message.reply_text(
         "👋 Welcome!\n\n"
-        "🎥 Video download karne ke liye\n"
-        "Instagram ya Facebook ka public link bhejo"
+        "🎥 Instagram ya Facebook ka *public video link* bhejo\n"
+        "📥 Video download karke bhej diya jayega",
+        parse_mode="Markdown"
     )
-    await update.message.reply_text(text)
 
 
-# URL check
+# URL validation
 def is_valid_url(text: str) -> bool:
     pattern = r"(https?://)?(www\.)?(instagram\.com|facebook\.com|fb\.watch)/.+"
-    return re.match(pattern, text) is not None
+    return re.search(pattern, text) is not None
 
 
 # Video download handler
@@ -39,37 +40,44 @@ async def download_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not is_valid_url(url):
         await update.message.reply_text(
-            "❌ Sirf Instagram ya Facebook ka public link bhejo"
+            "❌ Sirf *Instagram ya Facebook* ka public link bhejo",
+            parse_mode="Markdown"
         )
         return
 
-    await update.message.reply_text("⏳ Download ho raha hai, thoda wait karo...")
+    chat_id = update.message.chat_id
+    filename = f"video_{chat_id}.mp4"
+
+    await update.message.reply_text("⏳ Download ho raha hai, please wait...")
 
     ydl_opts = {
         "format": "best",
-        "outtmpl": "video.%(ext)s"
+        "outtmpl": filename,
+        "quiet": True,
+        "noplaylist": True,
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
 
-        # downloaded file find karo
-        filename = None
-        for file in os.listdir("."):
-            if file.startswith("video."):
-                filename = file
-                break
-
-        if not filename:
+        if not os.path.exists(filename):
             await update.message.reply_text("❌ Video download nahi ho paya")
             return
 
-        await update.message.reply_video(video=open(filename, "rb"))
+        await update.message.reply_video(
+            video=open(filename, "rb"),
+            caption="✅ Video downloaded successfully"
+        )
+
         os.remove(filename)
 
     except Exception as e:
-        await update.message.reply_text("❌ Error aaya, video download nahi ho saka")
+        await update.message.reply_text(
+            f"❌ Error aaya:\n`{str(e)}`",
+            parse_mode="Markdown"
+        )
 
 
 def main():
@@ -78,6 +86,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, download_video))
 
+    print("🤖 Bot started...")
     app.run_polling()
 
 
